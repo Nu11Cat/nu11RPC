@@ -9,6 +9,7 @@ import cn.nu11cat.register.MapRemoteRegister;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ProxyFactory {
@@ -25,11 +26,30 @@ public class ProxyFactory {
                 //服务发现
                 List<URL> list = MapRemoteRegister.get(interfaceClass.getName());
 
-                //负载均衡
-                URL url = LoadBalance.random(list);
-
                 //服务调用
-                String result = httpClient.send(url.getHostname(), url.getPort(), invocation);
+                String result = null;
+                List<URL> invokedUrls = new ArrayList<>();
+
+                int max = 3;
+                while(max>0){
+
+                    //负载均衡
+                    list.remove(invokedUrls);
+                    URL url = LoadBalance.random(list);
+                    invokedUrls.add(url);
+
+                    try {
+                        result = httpClient.send(url.getHostname(), url.getPort(), invocation);
+                    } catch (Exception e) {
+
+                        if(max-- != 0) continue;
+
+
+                        //服务容错
+                        //HelloServiceErrorCallback
+                        return "服务调用出错";
+                    }
+                }
 
                 return result;
             }

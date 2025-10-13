@@ -13,7 +13,7 @@ import java.net.URL;
 
 public class HttpClient {
 
-    public String send(String hostname, Integer port, Invocation invocation) {
+    public String send(String hostname, Integer port, Invocation invocation) throws IOException {
         try {
             URL url = new URL("http", hostname, port, "/");
             HttpURLConnection httpURLConnection = (HttpURLConnection) url.openConnection();
@@ -33,9 +33,10 @@ public class HttpClient {
             String result = IOUtils.toString(inputStream);
             return result;
         } catch (MalformedURLException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
         } catch (IOException e) {
-            e.printStackTrace();
+//            e.printStackTrace();
+            throw e;
         }
 
         return null;
