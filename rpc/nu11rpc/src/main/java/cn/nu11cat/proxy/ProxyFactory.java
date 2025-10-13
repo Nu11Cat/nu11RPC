@@ -19,6 +19,14 @@ public class ProxyFactory {
         Object proxyInstance = Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class[]{interfaceClass}, new InvocationHandler() {
             @Override
             public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+
+                String mock = System.getProperty("mock");
+                if(mock != null && mock.startsWith("return:")){
+                    String result = mock.replace("return:", "");
+                    return result;
+                }
+
+
                 Invocation invocation = new Invocation(interfaceClass.getName(), method.getName(), method.getParameterTypes(), args);
 
                 HttpClient httpClient = new HttpClient();
