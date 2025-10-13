@@ -5,64 +5,102 @@ import cn.nu11cat.common.URL;
 import cn.nu11cat.loadbalance.LoadBalance;
 import cn.nu11cat.protocol.HttpClient;
 import cn.nu11cat.register.MapRemoteRegister;
+import com.alibaba.nacos.api.exception.NacosException;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ProxyFactory {
 
-    public static <T> T getProxy(Class interfaceClass) {
+    public static <T> T getProxy(Class<T> interfaceClass) {
+        return (T) Proxy.newProxyInstance(
+                interfaceClass.getClassLoader(),
+                new Class[]{interfaceClass},
+                new RpcInvocationHandler(interfaceClass)
+        );
+    }
 
-        Object proxyInstance = Proxy.newProxyInstance(interfaceClass.getClassLoader(), new Class[]{interfaceClass}, new InvocationHandler() {
-            @Override
-            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    private static class RpcInvocationHandler implements InvocationHandler {
+        private final Class<?> interfaceClass;
+        private final HttpClient httpClient = new HttpClient();
 
-                String mock = System.getProperty("mock");
-                if(mock != null && mock.startsWith("return:")){
-                    String result = mock.replace("return:", "");
-                    return result;
-                }
+        public RpcInvocationHandler(Class<?> interfaceClass) {
+            this.interfaceClass = interfaceClass;
+        }
 
-
-                Invocation invocation = new Invocation(interfaceClass.getName(), method.getName(), method.getParameterTypes(), args);
-
-                HttpClient httpClient = new HttpClient();
-
-                //服务发现
-                List<URL> list = MapRemoteRegister.get(interfaceClass.getName());
-
-                //服务调用
-                String result = null;
-                List<URL> invokedUrls = new ArrayList<>();
-
-                int max = 3;
-                while(max>0){
-
-                    //负载均衡
-                    list.remove(invokedUrls);
-                    URL url = LoadBalance.random(list);
-                    invokedUrls.add(url);
-
-                    try {
-                        result = httpClient.send(url.getHostname(), url.getPort(), invocation);
-                    } catch (Exception e) {
-
-                        if(max-- != 0) continue;
-
-
-                        //服务容错
-                        //HelloServiceErrorCallback
-                        return "服务调用出错";
-                    }
-                }
-
-                return result;
+        @Override
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            // 1. Mock数据支持
+            String mock = System.getProperty("mock");
+            if (mock != null && mock.startsWith("return:")) {
+                return mock.replace("return:", "");
             }
-        });
 
-        return (T) proxyInstance;
+            // 2. 构造调用信息
+            Invocation invocation = new Invocation(
+                    interfaceClass.getName(),
+                    method.getName(),
+                    method.getParameterTypes(),
+                    args
+            );
+
+            // 3. 服务调用
+            return handleServiceCall(invocation);
+        }
+
+        private String handleServiceCall(Invocation invocation) {
+            try {
+                List<URL> availableUrls = getAvailableUrls(invocation.getInterfaceName());
+                return doRetry(invocation, availableUrls);
+            } catch (NacosException e) {
+                return "Fallback: Nacos错误 - " + e.getErrMsg();
+            }
+        }
+
+        private List<URL> getAvailableUrls(String serviceName) throws NacosException {
+            List<URL> urls = MapRemoteRegister.NacosRemoteRegister.get(serviceName);
+            if (urls == null || urls.isEmpty()) {
+                throw new NacosException(NacosException.INVALID_PARAM, "服务实例列表为空");
+            }
+            return urls;
+        }
+
+        private String doRetry(Invocation invocation, List<URL> availableUrls) {
+            int maxRetry = 3;
+            List<URL> invokedUrls = new ArrayList<>();
+            Exception lastException = null;
+
+            while (maxRetry-- > 0) {
+                URL selectedUrl = selectAvailableUrl(availableUrls, invokedUrls);
+                if (selectedUrl == null) break;
+
+                try {
+                    return httpClient.send(selectedUrl.getHostname(), selectedUrl.getPort(), invocation);
+                } catch (Exception e) {
+                    lastException = e;
+                    invokedUrls.add(selectedUrl);
+                    System.err.printf("调用 %s 失败（剩余重试次数: %d）: %s\n",
+                            selectedUrl, maxRetry, e.getMessage());
+                }
+            }
+
+            return buildFallbackResponse(lastException);
+        }
+
+        private URL selectAvailableUrl(List<URL> availableUrls, List<URL> invokedUrls) {
+            List<URL> candidates = new ArrayList<>(availableUrls);
+            candidates.removeAll(invokedUrls);
+            return candidates.isEmpty() ? null : LoadBalance.random(candidates);
+        }
+
+        private String buildFallbackResponse(Exception lastException) {
+            String errorMsg = Objects.nonNull(lastException) ?
+                    lastException.getMessage() : "无可用服务实例";
+            return "Fallback: " + errorMsg;
+        }
     }
 }

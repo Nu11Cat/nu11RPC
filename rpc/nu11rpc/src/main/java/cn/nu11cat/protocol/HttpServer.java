@@ -1,5 +1,8 @@
 package cn.nu11cat.protocol;
 
+import cn.nu11cat.common.URL;
+import cn.nu11cat.register.MapRemoteRegister;
+import com.alibaba.nacos.api.exception.NacosException;
 import org.apache.catalina.*;
 import org.apache.catalina.connector.Connector;
 import org.apache.catalina.core.StandardContext;
@@ -48,11 +51,18 @@ public class HttpServer {
             tomcat.addServlet(contextPath, "dispatcher", new DispatcherServlet());
             context.addServletMappingDecoded("/*", "dispatcher");
 
-            // 启动 Tomcat
+            // 2. 注册服务到Nacos
+            String serviceName = "cn.nu11cat.HelloService"; // 与服务接口名一致
+            URL url = new URL(hostname, port);
+            MapRemoteRegister.NacosRemoteRegister.register(serviceName, url);
+
+            System.out.println("[成功] 服务注册: " + serviceName + " -> " + url);
+
+            // 3. 启动Tomcat
             tomcat.start();
             tomcat.getServer().await();
-
-        } catch (LifecycleException e) {
+        } catch (Exception e) {
+            System.err.println("[失败] 服务启动异常: " + e.getMessage());
             e.printStackTrace();
         }
     }
