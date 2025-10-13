@@ -70,11 +70,12 @@ public class ProxyFactory {
         }
 
         private String doRetry(Invocation invocation, List<URL> availableUrls) {
-            int maxRetry = 3;
+            RetryConfig retryConfig = RetryConfig.defaultConfig(); // 使用默认配置
+            int attempt = 0;
             List<URL> invokedUrls = new ArrayList<>();
             Exception lastException = null;
 
-            while (maxRetry-- > 0) {
+            while (attempt <= retryConfig.getMaxAttempts()) {
                 URL selectedUrl = selectAvailableUrl(availableUrls, invokedUrls);
                 if (selectedUrl == null) break;
 
@@ -83,8 +84,25 @@ public class ProxyFactory {
                 } catch (Exception e) {
                     lastException = e;
                     invokedUrls.add(selectedUrl);
-                    System.err.printf("调用 %s 失败（剩余重试次数: %d）: %s\n",
-                            selectedUrl, maxRetry, e.getMessage());
+                    System.err.printf("调用 %s 失败（尝试 %d/%d）: %s\n",
+                            selectedUrl,
+                            attempt + 1,
+                            retryConfig.getMaxAttempts(),
+                            e.getMessage()
+                    );
+
+                    // 判断是否应该重试
+                    if (!retryConfig.shouldRetry(e)) {
+                        break;
+                    }
+
+                    // 执行退避等待
+                    if (attempt < retryConfig.getMaxAttempts()) {
+                        try {
+                            Thread.sleep(retryConfig.getBackoffMillis());
+                        } catch (InterruptedException ignored) {}
+                    }
+                    attempt++;
                 }
             }
 
