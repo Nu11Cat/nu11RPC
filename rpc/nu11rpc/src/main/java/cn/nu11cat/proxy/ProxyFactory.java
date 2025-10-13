@@ -1,11 +1,14 @@
 package cn.nu11cat.proxy;
 
 import cn.nu11cat.common.Invocation;
+import cn.nu11cat.common.URL;
 import cn.nu11cat.protocol.HttpClient;
+import cn.nu11cat.register.MapRemoteRegister;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.List;
 
 public class ProxyFactory {
 
@@ -17,6 +20,13 @@ public class ProxyFactory {
                 Invocation invocation = new Invocation(interfaceClass.getName(), method.getName(), method.getParameterTypes(), args);
 
                 HttpClient httpClient = new HttpClient();
+
+                //服务发现
+                List<URL> list = MapRemoteRegister.get(interfaceClass.getName());
+
+                //负载均衡
+
+
                 String result = httpClient.send("localhost", 8080, invocation);
 
                 return result;
