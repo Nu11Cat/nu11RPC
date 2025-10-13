@@ -28,4 +28,19 @@ public class URL implements Serializable {
     private String hostname;
     private Integer port;
 
+    public Integer getWeight() {
+        return weight;
+    }
+
+    public void setWeight(Integer weight) {
+        this.weight = weight;
+    }
+
+    private Integer weight;
+
+    public URL(String hostname, Integer port, Integer weight) {
+        this.hostname = hostname;
+        this.port = port;
+        this.weight = weight;
+    }
 }

@@ -4,27 +4,14 @@ import java.io.Serializable;
 
 public class Invocation implements Serializable {
 
+
+    public Invocation() {}
+
     public Invocation(String interfaceName, String methodName, Class[] parameterTypes, Object[] parameters) {
         this.interfaceName = interfaceName;
         this.methodName = methodName;
         this.parameterTypes = parameterTypes;
         this.parameters = parameters;
-    }
-
-    public int getConnectTimeout() {
-        return connectTimeout;
-    }
-
-    public void setConnectTimeout(int connectTimeout) {
-        this.connectTimeout = connectTimeout;
-    }
-
-    public int getReadTimeout() {
-        return readTimeout;
-    }
-
-    public void setReadTimeout(int readTimeout) {
-        this.readTimeout = readTimeout;
     }
 
     private int connectTimeout = 1000;  // 连接超时（毫秒）
@@ -35,35 +22,22 @@ public class Invocation implements Serializable {
     private Class[] parameterTypes;
     private Object[] parameters;
 
-    public String getInterfaceName() {
-        return interfaceName;
-    }
+    // ---- getter / setter ----
+    public int getConnectTimeout() { return connectTimeout; }
+    public void setConnectTimeout(int connectTimeout) { this.connectTimeout = connectTimeout; }
 
-    public String getMethodName() {
-        return methodName;
-    }
+    public int getReadTimeout() { return readTimeout; }
+    public void setReadTimeout(int readTimeout) { this.readTimeout = readTimeout; }
 
-    public Class[] getParameterTypes() {
-        return parameterTypes;
-    }
+    public String getInterfaceName() { return interfaceName; }
+    public void setInterfaceName(String interfaceName) { this.interfaceName = interfaceName; }
 
-    public Object[] getParameters() {
-        return parameters;
-    }
+    public String getMethodName() { return methodName; }
+    public void setMethodName(String methodName) { this.methodName = methodName; }
 
-    public void setInterfaceName(String interfaceName) {
-        this.interfaceName = interfaceName;
-    }
+    public Class[] getParameterTypes() { return parameterTypes; }
+    public void setParameterTypes(Class[] parameterTypes) { this.parameterTypes = parameterTypes; }
 
-    public void setMethodName(String methodName) {
-        this.methodName = methodName;
-    }
-
-    public void setParameterTypes(Class[] parameterTypes) {
-        this.parameterTypes = parameterTypes;
-    }
-
-    public void setParameters(Object[] parameters) {
-        this.parameters = parameters;
-    }
+    public Object[] getParameters() { return parameters; }
+    public void setParameters(Object[] parameters) { this.parameters = parameters; }
 }

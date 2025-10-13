@@ -2,6 +2,7 @@ package cn.nu11cat.protocol;
 
 import cn.nu11cat.common.Invocation;
 import cn.nu11cat.register.LocalRegister;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
 
 import javax.servlet.http.HttpServletRequest;
@@ -12,31 +13,34 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 public class HttpServerHandler {
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     public void handle(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            Invocation invocation = (Invocation) new ObjectInputStream(req.getInputStream()).readObject();
-            String interfaceName = invocation.getInterfaceName();
+            // 1. 解析 JSON 请求体
+            Invocation invocation = MAPPER.readValue(req.getInputStream(), Invocation.class);
 
-            Class classImpl = LocalRegister.get(interfaceName, "1.0");
-            Method method = classImpl.getMethod(invocation.getMethodName(), invocation.getParameterTypes());
-            String result = (String) method.invoke(classImpl.newInstance(),  invocation.getParameters());
+            // 2. 反射调用本地实现类
+            Class<?> implClass = LocalRegister.get(invocation.getInterfaceName(), "1.0");
+            if (implClass == null) {
+                resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                resp.getWriter().write("service not found");
+                return;
+            }
 
-            IOUtils.write(result, resp.getOutputStream());
+            Method method = implClass.getMethod(invocation.getMethodName(), invocation.getParameterTypes());
+            Object result = method.invoke(implClass.getDeclaredConstructor().newInstance(), invocation.getParameters());
 
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
-        } catch (InvocationTargetException e) {
-            throw new RuntimeException(e);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(e);
-        } catch (InstantiationException e) {
-            throw new RuntimeException(e);
+            // 3. 返回结果（JSON）
+            resp.setStatus(HttpServletResponse.SC_OK);
+            resp.setContentType("application/json; charset=UTF-8");
+            MAPPER.writeValue(resp.getOutputStream(), result);
+
+        } catch (Exception e) {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            try {
+                resp.getWriter().write("server error: " + e.getMessage());
+            } catch (Exception ignored) {}
         }
     }
-
 }

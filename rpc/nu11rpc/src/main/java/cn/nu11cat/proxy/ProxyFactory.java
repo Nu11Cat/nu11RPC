@@ -3,6 +3,7 @@ package cn.nu11cat.proxy;
 import cn.nu11cat.common.Invocation;
 import cn.nu11cat.common.URL;
 import cn.nu11cat.loadbalance.LoadBalance;
+import cn.nu11cat.loadbalance.RandomLoadBalance;
 import cn.nu11cat.protocol.HttpClient;
 import cn.nu11cat.register.MapRemoteRegister;
 import com.alibaba.nacos.api.exception.NacosException;
@@ -112,7 +113,10 @@ public class ProxyFactory {
         private URL selectAvailableUrl(List<URL> availableUrls, List<URL> invokedUrls) {
             List<URL> candidates = new ArrayList<>(availableUrls);
             candidates.removeAll(invokedUrls);
-            return candidates.isEmpty() ? null : LoadBalance.random(candidates);
+
+            // 使用随机策略
+            LoadBalance loadBalance = new RandomLoadBalance();
+            return candidates.isEmpty() ? null : loadBalance.select(candidates);
         }
 
         private String buildFallbackResponse(Exception lastException) {
