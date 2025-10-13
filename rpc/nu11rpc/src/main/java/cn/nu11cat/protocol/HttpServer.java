@@ -44,9 +44,9 @@ public class HttpServer {
             service.setContainer(engine);
             service.addConnector(connector);
 
-//            // 注册 Servlet
-//            tomcat.addServlet(contextPath, "dispatcher", new DispatcherServlet());
-//            context.addServletMappingDecoded("/*", "dispatcher");
+            // 注册 Servlet
+            tomcat.addServlet(contextPath, "dispatcher", new DispatcherServlet());
+            context.addServletMappingDecoded("/*", "dispatcher");
 
             // 启动 Tomcat
             tomcat.start();
