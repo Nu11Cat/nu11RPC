@@ -7,7 +7,7 @@ import cn.nu11cat.proxy.ProxyFactory;
 public class Consumer {
     public static void main(String[] args) {
         HelloService helloService = ProxyFactory.getProxy(HelloService.class);
-        String result = helloService.sayHello("nu11cat1");
+        String result = helloService.sayHello("nu11cat2");
         System.out.println(result);
 
     }

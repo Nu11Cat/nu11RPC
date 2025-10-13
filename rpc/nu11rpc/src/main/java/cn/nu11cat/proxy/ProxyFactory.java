@@ -2,6 +2,7 @@ package cn.nu11cat.proxy;
 
 import cn.nu11cat.common.Invocation;
 import cn.nu11cat.common.URL;
+import cn.nu11cat.loadbalance.LoadBalance;
 import cn.nu11cat.protocol.HttpClient;
 import cn.nu11cat.register.MapRemoteRegister;
 
@@ -25,9 +26,10 @@ public class ProxyFactory {
                 List<URL> list = MapRemoteRegister.get(interfaceClass.getName());
 
                 //负载均衡
+                URL url = LoadBalance.random(list);
 
-
-                String result = httpClient.send("localhost", 8080, invocation);
+                //服务调用
+                String result = httpClient.send(url.getHostname(), url.getPort(), invocation);
 
                 return result;
             }

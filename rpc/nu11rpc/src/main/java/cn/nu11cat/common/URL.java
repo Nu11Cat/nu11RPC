@@ -1,6 +1,8 @@
 package cn.nu11cat.common;
 
-public class URL {
+import java.io.Serializable;
+
+public class URL implements Serializable {
 
     public Integer getPort() {
         return port;
