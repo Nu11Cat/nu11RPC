@@ -17,7 +17,8 @@ public class HttpServerHandler {
         try {
             Invocation invocation = (Invocation) new ObjectInputStream(req.getInputStream()).readObject();
             String interfaceName = invocation.getInterfaceName();
-            Class classImpl = LocalRegister.get(interfaceName);
+
+            Class classImpl = LocalRegister.get(interfaceName, "1.0");
             Method method = classImpl.getMethod(invocation.getMethodName(), invocation.getParameterTypes());
             String result = (String) method.invoke(classImpl.newInstance(),  invocation.getParameters());
 
