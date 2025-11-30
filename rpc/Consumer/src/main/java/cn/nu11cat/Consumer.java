@@ -12,3 +12,16 @@ public class Consumer {
 
     }
 }
+
+
+//package cn.nu11cat;
+//
+//public class Consumer {
+//    public static void main(String[] args) {
+//        // 本地直接 new，不走代理、不走网络
+//        HelloService helloService = new HelloServiceImpl();
+//
+//        String result = helloService.sayHello("nu11cat2");
+//        System.out.println(result);
+//    }
+//}
