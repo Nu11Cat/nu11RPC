@@ -8,7 +8,7 @@
 
 ----
 
-技术栈
+技术栈：Java17+Netty+Nacos+Tomcat
 
 - **语言与框架**：Java 17、Netty、Tomcat
 - **RPC 核心实现**：自定义 Invocation 调用结构、JSON/对象序列化、动态代理
