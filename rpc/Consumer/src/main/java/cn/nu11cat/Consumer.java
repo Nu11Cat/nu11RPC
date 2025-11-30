@@ -1,7 +1,5 @@
 package cn.nu11cat;
 
-import cn.nu11cat.common.Invocation;
-import cn.nu11cat.protocol.HttpClient;
 import cn.nu11cat.proxy.ProxyFactory;
 
 public class Consumer {

@@ -4,7 +4,7 @@ import cn.nu11cat.common.Invocation;
 import cn.nu11cat.common.URL;
 import cn.nu11cat.loadbalance.LoadBalance;
 import cn.nu11cat.loadbalance.RandomLoadBalance;
-import cn.nu11cat.protocol.HttpClient;
+import cn.nu11cat.protocol.NettyClient;
 import cn.nu11cat.register.MapRemoteRegister;
 import com.alibaba.nacos.api.exception.NacosException;
 
@@ -27,7 +27,8 @@ public class ProxyFactory {
 
     private static class RpcInvocationHandler implements InvocationHandler {
         private final Class<?> interfaceClass;
-        private final HttpClient httpClient = new HttpClient();
+        //private final HttpClient httpClient = new HttpClient();
+        private final NettyClient nettyClient = new NettyClient();
 
         public RpcInvocationHandler(Class<?> interfaceClass) {
             this.interfaceClass = interfaceClass;
@@ -81,7 +82,7 @@ public class ProxyFactory {
                 if (selectedUrl == null) break;
 
                 try {
-                    return httpClient.send(selectedUrl.getHostname(), selectedUrl.getPort(), invocation);
+                    return nettyClient.send(selectedUrl.getHostname(), selectedUrl.getPort(), invocation).toString();
                 } catch (Exception e) {
                     lastException = e;
                     invokedUrls.add(selectedUrl);

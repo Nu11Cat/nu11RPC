@@ -1,7 +1,6 @@
 package cn.nu11cat;
 
 import cn.nu11cat.common.URL;
-import cn.nu11cat.protocol.HttpServer;
 import cn.nu11cat.register.LocalRegister;
 import cn.nu11cat.register.MapRemoteRegister;
 
